@@ -3,485 +3,391 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI答题网站 - 知识挑战平台</title>
-    <!-- Tailwind CSS v3 -->
+    <title>AI答题挑战</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Font Awesome -->
-    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
-    <!-- Tailwind 配置 -->
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        primary: '#3b82f6', // 知识蓝
-                        secondary: '#f97316', // 活力橙
-                        neutral: '#6b7280', // 中性灰
-                        success: '#10b981', // 成功绿
-                        danger: '#ef4444', // 错误红
-                        dark: '#1e293b', // 深色背景
-                        light: '#f8fafc' // 浅色背景
-                    },
-                    fontFamily: {
-                        sans: ['Inter', 'system-ui', 'sans-serif'],
-                    },
-                    animation: {
-                        'fade-in': 'fadeIn 0.5s ease-in-out',
-                        'slide-in': 'slideIn 0.5s ease-in-out',
-                    },
-                    keyframes: {
-                        fadeIn: {
-                            '0%': { opacity: '0' },
-                            '100%': { opacity: '1' },
-                        },
-                        slideIn: {
-                            '0%': { transform: 'translateY(20px)', opacity: '0' },
-                            '100%': { transform: 'translateY(0)', opacity: '1' },
-                        },
-                    },
-                }
-            }
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- KaTeX支持数学公式渲染 -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.4/dist/katex.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.4/dist/katex.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.4/dist/contrib/auto-render.min.js"></script>
+    <style>
+        .option-hover:hover {
+            @apply bg-gray-50 border-gray-300;
         }
-    </script>
-    <style type="text/tailwindcss">
-        @layer utilities {
-            .glass {
-                background: rgba(255, 255, 255, 0.25);
-                backdrop-filter: blur(10px);
-                -webkit-backdrop-filter: blur(10px);
-                border: 1px solid rgba(255, 255, 255, 0.18);
-            }
-            .glass-dark {
-                background: rgba(30, 41, 59, 0.75);
-                backdrop-filter: blur(10px);
-                -webkit-backdrop-filter: blur(10px);
-                border: 1px solid rgba(255, 255, 255, 0.08);
-            }
-            .text-shadow {
-                text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-            }
-            .card-hover {
-                transition: all 0.3s ease;
-            }
-            .card-hover:hover {
-                transform: translateY(-5px);
-                box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-            }
-            .progress-bar {
-                transition: width 0.5s ease-in-out;
-            }
-            .option-hover:hover {
-                transform: translateX(5px);
-            }
+        .hidden {
+            display: none !important;
+        }
+        /* 测试样式 */
+        header {
+            background-color: #ffffff !important;
+            border-bottom: 2px solid #e5e7eb !important;
+        }
+        #settings-btn {
+            background-color: #3b82f6 !important;
+            color: white !important;
+        }
+        #mobile-menu-btn {
+            background-color: #3b82f6 !important;
+            color: white !important;
+            padding: 8px 12px;
+            border-radius: 4px;
         }
     </style>
 </head>
-<body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen">
-    <!-- 顶部导航栏 -->
-    <nav class="bg-white shadow-md sticky top-0 z-50">
-        <div class="container mx-auto px-4 py-3 flex justify-between items-center">
-            <div class="flex items-center space-x-2">
-                <i class="fa fa-question-circle text-primary text-2xl"></i>
-                <h1 class="text-xl font-bold text-primary">AI答题挑战</h1>
-            </div>
-            <div class="hidden md:flex space-x-6">
-                <button id="nav-quiz" class="nav-btn flex items-center space-x-1 text-gray-700 hover:text-primary transition-colors">
-                    <i class="fa fa-play-circle"></i>
-                    <span>答题</span>
+<body class="bg-gray-50 font-sans text-gray-800 min-h-screen">
+    <!-- 头部导航 -->
+    <header class="bg-white shadow-sm sticky top-0 z-50">
+        <div class="container mx-auto px-4 py-4 flex justify-between items-center flex-wrap">
+            <h1 class="text-xl font-bold text-blue-600">
+                <i class="fa fa-robot mr-2"></i>AI答题挑战
+            </h1>
+            
+            <!-- 桌面端导航 -->
+            <nav class="flex space-x-6 items-center relative z-50">
+                <button id="nav-quiz" class="nav-btn text-gray-700 hover:text-blue-600 transition-colors px-3 py-2 rounded-md hover:bg-gray-100 whitespace-nowrap">
+                    <i class="fa fa-question-circle mr-1"></i>答题
                 </button>
-                <button id="nav-generate" class="nav-btn flex items-center space-x-1 text-gray-700 hover:text-primary transition-colors">
-                    <i class="fa fa-plus-circle"></i>
-                    <span>生成题目</span>
+                <button id="nav-generate" class="nav-btn text-gray-700 hover:text-blue-600 transition-colors px-3 py-2 rounded-md hover:bg-gray-100 whitespace-nowrap">
+                    <i class="fa fa-plus-circle mr-1"></i>生成题目
                 </button>
-                <button id="nav-history" class="nav-btn flex items-center space-x-1 text-gray-700 hover:text-primary transition-colors">
-                    <i class="fa fa-history"></i>
-                    <span>历史记录</span>
+                <button id="nav-history" class="nav-btn text-gray-700 hover:text-blue-600 transition-colors px-3 py-2 rounded-md hover:bg-gray-100 whitespace-nowrap">
+                    <i class="fa fa-history mr-1"></i>历史记录
                 </button>
-                <button id="nav-stats" class="nav-btn flex items-center space-x-1 text-gray-700 hover:text-primary transition-colors">
-                    <i class="fa fa-bar-chart"></i>
-                    <span>统计</span>
+                <button id="nav-stats" class="nav-btn text-gray-700 hover:text-blue-600 transition-colors px-3 py-2 rounded-md hover:bg-gray-100 whitespace-nowrap">
+                    <i class="fa fa-chart-bar mr-1"></i>统计分析
                 </button>
-            </div>
-            <div class="flex items-center space-x-4">
-                <button id="settings-btn" class="text-gray-700 hover:text-primary transition-colors">
-                    <i class="fa fa-cog text-xl"></i>
+                <button id="nav-latest" class="nav-btn text-blue-600 hover:bg-blue-50 transition-colors px-3 py-2 rounded-md whitespace-nowrap">
+                    <i class="fa fa-arrow-right mr-1"></i>最新题目
                 </button>
-                <button id="mobile-menu-btn" class="md:hidden text-gray-700">
-                    <i class="fa fa-bars text-xl"></i>
+                <button id="settings-btn" class="text-gray-700 hover:text-blue-600 transition-colors flex items-center justify-center w-10 h-10 rounded-full hover:bg-gray-100 ml-2 flex-shrink-0 relative z-50 flex">
+                    <i class="fa fa-cog"></i>
+                </button>
+            </nav>
+            
+            <!-- 移动端菜单按钮 -->
+            <button id="mobile-menu-btn" class="hidden text-gray-700 hover:text-blue-600 z-50">
+                <i class="fa fa-ellipsis-v text-xl"></i>
+            </button>
+        </div>
+        
+        <!-- 移动端导航菜单 -->
+        <div id="mobile-menu" class="md:hidden hidden bg-white border-t border-gray-200">
+            <div class="container mx-auto px-4 py-2 flex flex-col space-y-3">
+                <button id="mobile-nav-quiz" class="mobile-nav-btn py-2 text-gray-700 hover:text-blue-600 transition-colors">
+                    <i class="fa fa-question-circle mr-1"></i>答题
+                </button>
+                <button id="mobile-nav-generate" class="mobile-nav-btn py-2 text-gray-700 hover:text-blue-600 transition-colors">
+                    <i class="fa fa-plus-circle mr-1"></i>生成题目
+                </button>
+                <button id="mobile-nav-history" class="mobile-nav-btn py-2 text-gray-700 hover:text-blue-600 transition-colors">
+                    <i class="fa fa-history mr-1"></i>历史记录
+                </button>
+                <button id="mobile-nav-stats" class="mobile-nav-btn py-2 text-gray-700 hover:text-blue-600 transition-colors">
+                    <i class="fa fa-chart-bar mr-1"></i>统计分析
+                </button>
+                <button id="mobile-nav-latest" class="mobile-nav-btn py-2 text-blue-600 hover:bg-blue-50 transition-colors">
+                    <i class="fa fa-arrow-right mr-1"></i>最新题目
+                </button>
+                <button id="mobile-settings-btn" class="py-2 text-gray-700 hover:text-blue-600 transition-colors">
+                    <i class="fa fa-cog mr-1"></i>设置
                 </button>
             </div>
         </div>
-        <!-- 移动端菜单 -->
-        <div id="mobile-menu" class="md:hidden hidden bg-white border-t border-gray-200 animate-fade-in">
-            <div class="container mx-auto px-4 py-2 flex flex-col space-y-2">
-                <button id="mobile-nav-quiz" class="mobile-nav-btn flex items-center space-x-2 py-2 text-gray-700 hover:text-primary transition-colors">
-                    <i class="fa fa-play-circle"></i>
-                    <span>答题</span>
-                </button>
-                <button id="mobile-nav-generate" class="mobile-nav-btn flex items-center space-x-2 py-2 text-gray-700 hover:text-primary transition-colors">
-                    <i class="fa fa-plus-circle"></i>
-                    <span>生成题目</span>
-                </button>
-                <button id="mobile-nav-history" class="mobile-nav-btn flex items-center space-x-2 py-2 text-gray-700 hover:text-primary transition-colors">
-                    <i class="fa fa-history"></i>
-                    <span>历史记录</span>
-                </button>
-                <button id="mobile-nav-stats" class="mobile-nav-btn flex items-center space-x-2 py-2 text-gray-700 hover:text-primary transition-colors">
-                    <i class="fa fa-bar-chart"></i>
-                    <span>统计</span>
-                </button>
+    </header>
+
+    <!-- 主要内容 -->
+    <main class="container mx-auto px-4 py-8">
+        <!-- 答题页面 -->
+        <div id="quiz-page" class="page">
+            <div class="bg-white rounded-xl shadow-md p-6 max-w-4xl mx-auto">
+                <!-- 进度条 -->
+                <div class="mb-6">
+                    <div class="flex justify-between text-sm text-gray-500 mb-2">
+                        <span>进度</span>
+                        <span id="question-number">题目 0/0</span>
+                    </div>
+                    <div class="h-2 bg-gray-200 rounded-full overflow-hidden">
+                        <div id="progress-bar" class="h-full bg-blue-600 w-0 transition-all"></div>
+                    </div>
+                </div>
+                
+                <!-- 题目卡片 -->
+                <div id="question-card" class="mb-6">
+                    <h2 id="question-text" class="text-xl font-medium mb-6">请先生成题目开始答题</h2>
+                    
+                    <!-- 选项容器 -->
+                    <div id="options-container" class="space-y-3">
+                        <!-- 选项会动态生成 -->
+                    </div>
+                    
+                    <!-- 答题反馈 -->
+                    <div id="answer-feedback" class="mt-6 hidden"></div>
+                </div>
+                
+                <!-- 底部操作栏 -->
+                <div class="flex justify-between items-center mt-8">
+                    <div class="flex items-center text-sm text-gray-500">
+                        <span class="mr-4">
+                            <i class="fa fa-clock-o mr-1"></i>
+                            <span id="timer-display">00:00</span>
+                        </span>
+                        <span>
+                            <i class="fa fa-check mr-1"></i>
+                            <span id="current-answered">0</span>/<span id="total-answered">0</span>
+                        </span>
+                    </div>
+                    
+                    <div class="flex space-x-3">
+                        <button id="prev-btn" disabled class="px-6 py-2 bg-gray-200 text-gray-500 rounded-lg hover:bg-gray-300 transition-colors disabled:opacity-50">
+                            <i class="fa fa-arrow-left mr-2"></i>上一题
+                        </button>
+                        <button id="next-btn" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                            下一题<i class="fa fa-arrow-right ml-2"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 空状态提示 -->
+            <div id="empty-state" class="text-center py-16 max-w-4xl mx-auto hidden">
+                <div class="bg-white rounded-xl shadow-md p-8">
+                    <i class="fa fa-clipboard-list text-gray-300 text-6xl mb-4"></i>
+                    <h3 class="text-xl font-medium text-gray-700 mb-2">暂无题目</h3>
+                    <p class="text-gray-500 mb-6">您的题库为空，请先生成一些题目开始答题</p>
+                    <button id="generate-first" class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                        <i class="fa fa-plus-circle mr-2"></i>生成题目
+                    </button>
+                </div>
             </div>
         </div>
-    </nav>
-
-    <!-- 主内容区 -->
-    <main class="container mx-auto px-4 py-6">
-        <!-- 页面内容容器 -->
-        <div id="content-container">
-            <!-- 答题页面 -->
-            <section id="quiz-page" class="page active animate-fade-in">
-                <div class="max-w-3xl mx-auto">
-                    <!-- 进度条 -->
-                    <div class="mb-6 bg-gray-200 rounded-full h-2.5">
-                        <div id="progress-bar" class="bg-primary h-2.5 rounded-full progress-bar" style="width: 0%"></div>
+        
+        <!-- 生成题目页面 -->
+        <div id="generate-page" class="page hidden">
+            <div class="bg-white rounded-xl shadow-md p-6 max-w-3xl mx-auto">
+                <h2 class="text-xl font-medium mb-6">
+                    <i class="fa fa-plus-circle text-blue-600 mr-2"></i>生成新题目
+                </h2>
+                
+                <form id="generate-form" class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1" for="subject">
+                            学科
+                        </label>
+                        <input type="text" id="subject" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="例如：小学数学、初中英语、前端开发" value="小学数学">
                     </div>
                     
-                    <h2 class="text-2xl font-bold mb-4">答题</h2>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1" for="keywords">
+                            关键词
+                        </label>
+                        <input type="text" id="keywords" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="例如：加减法、语法、JavaScript" value="加法运算">
+                    </div>
                     
-                    <!-- 题目卡片 -->
-                    <div id="question-card" class="bg-white rounded-xl shadow-lg p-6 mb-6 animate-slide-in">
-                        <div class="flex justify-between items-start mb-4">
-                            <span id="question-number" class="bg-primary text-white text-sm font-medium px-3 py-1 rounded-full">题目 1/20</span>
-                            <span id="question-timer" class="text-gray-500 text-sm">
-                                <i class="fa fa-clock-o mr-1"></i>
-                                <span id="timer-display">00:00</span>
-                            </span>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1" for="question-count">
+                            题目数量
+                        </label>
+                        <input type="number" id="question-count" min="1" max="20" value="5" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+                    
+                    <button type="submit" class="w-full px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center">
+                        <i class="fa fa-magic mr-2"></i>生成题目
+                    </button>
+                </form>
+                
+                <!-- 生成状态 -->
+                <div id="generation-status" class="mt-8 hidden">
+                    <div class="mb-4">
+                        <div class="flex justify-between text-sm text-gray-500 mb-2">
+                            <span>生成进度</span>
+                            <span id="generation-message">准备生成...</span>
                         </div>
-                        
-                        <h2 id="question-text" class="text-xl font-bold text-gray-800 mb-6">
-                            加载题目中...
-                        </h2>
-                        
-                        <div id="options-container" class="space-y-3 mb-6">
-                            <!-- 选项将通过JS动态生成 -->
-                            <div class="animate-pulse bg-gray-100 rounded-lg p-4 mb-3"></div>
-                            <div class="animate-pulse bg-gray-100 rounded-lg p-4 mb-3"></div>
-                            <div class="animate-pulse bg-gray-100 rounded-lg p-4 mb-3"></div>
-                            <div class="animate-pulse bg-gray-100 rounded-lg p-4"></div>
-                        </div>
-                        
-                        <div id="answer-feedback" class="hidden mb-6 p-4 rounded-lg">
-                            <!-- 答题反馈将通过JS动态生成 -->
-                        </div>
-                        
-                        <div class="flex justify-between">
-                            <button id="prev-btn" class="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center">
-                                <i class="fa fa-arrow-left mr-2"></i>
-                                上一题
-                            </button>
-                            <button id="next-btn" class="bg-primary text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors flex items-center">
-                                下一题
-                                <i class="fa fa-arrow-right ml-2"></i>
-                            </button>
+                        <div class="h-2 bg-gray-200 rounded-full overflow-hidden">
+                            <div id="generation-progress" class="h-full bg-blue-600 w-0 transition-all"></div>
                         </div>
                     </div>
                     
-                    <!-- 统计卡片 -->
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div class="bg-white rounded-xl shadow-md p-4 card-hover">
-                            <div class="flex items-center justify-between">
-                                <div>
-                                    <p class="text-sm text-gray-500">当前已做</p>
-                                    <p id="current-answered" class="text-2xl font-bold text-primary">0</p>
-                                </div>
-                                <div class="bg-blue-100 p-3 rounded-full">
-                                    <i class="fa fa-check-circle text-primary text-xl"></i>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="bg-white rounded-xl shadow-md p-4 card-hover">
-                            <div class="flex items-center justify-between">
-                                <div>
-                                    <p class="text-sm text-gray-500">总做题数</p>
-                                    <p id="total-answered" class="text-2xl font-bold text-secondary">0</p>
-                                </div>
-                                <div class="bg-orange-100 p-3 rounded-full">
-                                    <i class="fa fa-list-alt text-secondary text-xl"></i>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="bg-white rounded-xl shadow-md p-4 card-hover">
-                            <div class="flex items-center justify-between">
-                                <div>
-                                    <p class="text-sm text-gray-500">题目库存</p>
-                                    <p id="question-stock" class="text-2xl font-bold text-green-600">0</p>
-                                </div>
-                                <div class="bg-green-100 p-3 rounded-full">
-                                    <i class="fa fa-database text-green-600 text-xl"></i>
-                                </div>
-                            </div>
-                        </div>
+                    <div id="generation-results" class="mt-4 max-h-60 overflow-y-auto space-y-2"></div>
+                    
+                    <div class="flex space-x-3 mt-6">
+                        <button id="cancel-generation" class="flex-1 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors">
+                            <i class="fa fa-times mr-2"></i>取消
+                        </button>
+                        <button id="finish-generation" class="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors hidden">
+                            <i class="fa fa-check mr-2"></i>完成
+                        </button>
                     </div>
                 </div>
-            </section>
-
-            <!-- 生成题目页面 -->
-            <section id="generate-page" class="page hidden animate-fade-in">
-                <div class="max-w-2xl mx-auto">
-                    <div class="bg-white rounded-xl shadow-lg p-6 mb-6">
-                        <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center">
-                            <i class="fa fa-plus-circle text-primary mr-2"></i>
-                            生成新题目
-                        </h2>
-                        
-                        <form id="generate-form" class="space-y-4">
-                            <div>
-                                <label for="subject" class="block text-sm font-medium text-gray-700 mb-1">学科</label>
-                                <select id="subject" name="subject" 
-                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary">
-                                    <option value="小学">小学</option>
-                                    <option value="初中">初中</option>
-                                    <option value="高中">高中</option>
-                                    <option value="大学">大学</option>
-                                    <option value="生活技巧">生活技巧</option>
-                                    <option value="工作技能">工作技能</option>
-                                    <option value="急救知识">急救知识</option>
-                                    <option value="必备常识">必备常识</option>
-                                    <option value="万金油搭配">万金油搭配</option>
-                                    <option value="其他">其他</option>
-                                </select>
-                                <p class="mt-1 text-sm text-gray-500">选择题目所属的学科</p>
-                            </div>
-                            
-                            <div>
-                                <label for="keywords" class="block text-sm font-medium text-gray-700 mb-1">关键词</label>
-                                <input type="text" id="keywords" name="keywords" placeholder="输入关键词，用逗号分隔（如：细胞结构,光合作用,遗传规律）" 
-                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary">
-                                <p class="mt-1 text-sm text-gray-500">输入相关关键词，系统将基于学科和关键词生成题目</p>
-                            </div>
-                            
-                            <div>
-                                <label for="question-count" class="block text-sm font-medium text-gray-700 mb-1">题目数量</label>
-                                <select id="question-count" name="question-count" 
-                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary">
-                                    <option value="5">5题</option>
-                                    <option value="10">10题</option>
-                                    <option value="15">15题</option>
-                                    <option value="20">20题</option>
-                                </select>
-                            </div>
-
-                            
-                            
-                            <div class="pt-4">
-                                <button type="submit" id="generate-btn" class="w-full bg-primary text-white py-3 rounded-lg hover:bg-blue-600 transition-colors flex items-center justify-center">
-                                    <i class="fa fa-magic mr-2"></i>
-                                    开始生成
-                                </button>
-                            </div>
-                        </form>
+            </div>
+        </div>
+        
+        <!-- 历史记录页面 -->
+        <div id="history-page" class="page hidden">
+            <div class="bg-white rounded-xl shadow-md p-6 max-w-4xl mx-auto">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-xl font-medium">
+                        <i class="fa fa-history text-blue-600 mr-2"></i>答题历史
+                    </h2>
+                    
+                    <div class="flex space-x-3">
+                        <select id="history-filter" class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                            <option value="all">全部题目</option>
+                            <option value="correct">回答正确</option>
+                            <option value="incorrect">回答错误</option>
+                            <option value="unanswered">未回答</option>
+                        </select>
+                        <button id="clear-history" class="px-3 py-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors">
+                            <i class="fa fa-trash mr-1"></i>清空
+                        </button>
+                    </div>
+                </div>
+                
+                <div id="history-list" class="space-y-4">
+                    <!-- 历史记录会动态生成 -->
+                </div>
+            </div>
+        </div>
+        
+        <!-- 统计分析页面 -->
+        <div id="stats-page" class="page hidden">
+            <div class="bg-white rounded-xl shadow-md p-6 max-w-4xl mx-auto">
+                <h2 class="text-xl font-medium mb-6">
+                    <i class="fa fa-chart-bar text-blue-600 mr-2"></i>统计分析
+                </h2>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                    <div class="bg-blue-50 rounded-lg p-4">
+                        <h3 class="text-sm font-medium text-blue-700 mb-2">总答题数</h3>
+                        <p class="text-3xl font-bold text-blue-600" id="stats-total">0</p>
                     </div>
                     
-                    <!-- 生成状态卡片 -->
-                    <div id="generation-status" class="hidden bg-white rounded-xl shadow-lg p-6">
-                        <h3 class="text-lg font-semibold text-gray-800 mb-4">生成进度</h3>
-                        
-                        <div class="mb-4 bg-gray-200 rounded-full h-2.5">
-                            <div id="generation-progress" class="bg-secondary h-2.5 rounded-full progress-bar" style="width: 0%"></div>
-                        </div>
-                        
-                        <p id="generation-message" class="text-gray-600 mb-4">准备生成题目...</p>
-                        
-                        <div id="generation-results" class="space-y-3 max-h-60 overflow-y-auto">
-                            <!-- 生成结果将通过JS动态添加 -->
-                        </div>
-                        
-                        <div class="mt-6 flex justify-between">
-                            <button id="cancel-generation" class="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300 transition-colors">
-                                取消
-                            </button>
-                            <button id="finish-generation" class="bg-primary text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors hidden">
-                                完成
-                            </button>
-                        </div>
+                    <div class="bg-green-50 rounded-lg p-4">
+                        <h3 class="text-sm font-medium text-green-700 mb-2">正确率</h3>
+                        <p class="text-3xl font-bold text-green-600" id="stats-accuracy">0%</p>
+                    </div>
+                    
+                    <div class="bg-purple-50 rounded-lg p-4">
+                        <h3 class="text-sm font-medium text-purple-700 mb-2">当前连对</h3>
+                        <p class="text-3xl font-bold text-purple-600" id="stats-streak">0</p>
+                    </div>
+                    
+                    <div class="bg-amber-50 rounded-lg p-4">
+                        <h3 class="text-sm font-medium text-amber-700 mb-2">最高连对</h3>
+                        <p class="text-3xl font-bold text-amber-600" id="stats-best-streak">0</p>
                     </div>
                 </div>
-            </section>
-
-            <!-- 历史记录页面 -->
-            <section id="history-page" class="page hidden animate-fade-in">
-                <div class="max-w-4xl mx-auto">
-                    <div class="bg-white rounded-xl shadow-lg p-6 mb-6">
-                        <div class="flex justify-between items-center mb-6">
-                            <h2 class="text-2xl font-bold text-gray-800 flex items-center">
-                                <i class="fa fa-history text-primary mr-2"></i>
-                                题目历史记录
-                            </h2>
-                            
-                            <div class="flex space-x-2">
-                                <select id="history-filter" class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-sm">
-                                    <option value="all">全部题目</option>
-                                    <option value="correct">答对的题</option>
-                                    <option value="incorrect">答错的题</option>
-                                    <option value="unanswered">未答题</option>
-                                </select>
-                                <button id="clear-history" class="bg-red-500 text-white px-3 py-2 rounded-lg hover:bg-red-600 transition-colors text-sm">
-                                    <i class="fa fa-trash mr-1"></i>
-                                    清空
-                                </button>
-                            </div>
-                        </div>
-                        
-                        <div id="history-list" class="space-y-4">
-                            <!-- 历史题目将通过JS动态生成 -->
-                            <div class="text-center py-12">
-                                <i class="fa fa-clipboard-list text-gray-300 text-5xl mb-4"></i>
-                                <p class="text-gray-500">暂无历史记录</p>
-                                <button id="generate-first" class="mt-4 bg-primary text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors">
-                                    生成第一题
-                                </button>
-                            </div>
-                        </div>
-                        
-                        <!-- 历史题目详情模态框 -->
-                        <div id="history-detail-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
-                            <div class="bg-white rounded-xl shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto animate-slide-in">
-                                <div class="p-6">
-                                    <div class="flex justify-between items-start mb-4">
-                                        <h3 id="modal-question-number" class="text-lg font-semibold text-gray-800">题目 #1</h3>
-                                        <button id="close-modal" class="text-gray-500 hover:text-gray-700">
-                                            <i class="fa fa-times text-xl"></i>
-                                        </button>
-                                    </div>
-                                    
-                                    <h4 id="modal-question-text" class="text-xl font-bold text-gray-800 mb-4">
-                                        题目内容将显示在这里
-                                    </h4>
-                                    
-                                    <div id="modal-options" class="space-y-3 mb-6">
-                                        <!-- 选项将通过JS动态生成 -->
-                                    </div>
-                                    
-                                    <div id="modal-answer" class="mb-4 p-4 rounded-lg">
-                                        <!-- 答案将通过JS动态生成 -->
-                                    </div>
-                                    
-                                    <div class="text-sm text-gray-500">
-                                        <p>生成时间: <span id="modal-timestamp"></span></p>
-                                        <p>关键词: <span id="modal-keywords"></span></p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="bg-gray-50 rounded-lg p-4 h-80">
+                        <h3 class="text-sm font-medium text-gray-700 mb-4">答题趋势</h3>
+                        <canvas id="trends-chart" class="w-full h-full"></canvas>
+                    </div>
+                    
+                    <div class="bg-gray-50 rounded-lg p-4 h-80">
+                        <h3 class="text-sm font-medium text-gray-700 mb-4">题目状态分布</h3>
+                        <canvas id="categories-chart" class="w-full h-full"></canvas>
                     </div>
                 </div>
-            </section>
-
-            <!-- 统计页面 -->
-            <section id="stats-page" class="page hidden animate-fade-in">
-                <div class="max-w-4xl mx-auto">
-                    <div class="bg-white rounded-xl shadow-lg p-6 mb-6">
-                        <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center">
-                            <i class="fa fa-bar-chart text-primary mr-2"></i>
-                            答题统计
-                        </h2>
-                        
-                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-                            <div class="bg-blue-50 rounded-xl p-4 card-hover">
-                                <p class="text-sm text-gray-500">总答题数</p>
-                                <p id="stats-total-answered" class="text-3xl font-bold text-primary">0</p>
-                            </div>
-                            <div class="bg-green-50 rounded-xl p-4 card-hover">
-                                <p class="text-sm text-gray-500">正确答题数</p>
-                                <p id="stats-correct-answers" class="text-3xl font-bold text-green-600">0</p>
-                            </div>
-                            <div class="bg-red-50 rounded-xl p-4 card-hover">
-                                <p class="text-sm text-gray-500">错误答题数</p>
-                                <p id="stats-incorrect-answers" class="text-3xl font-bold text-red-500">0</p>
-                            </div>
-                            <div class="bg-orange-50 rounded-xl p-4 card-hover">
-                                <p class="text-sm text-gray-500">正确率</p>
-                                <p id="stats-accuracy" class="text-3xl font-bold text-secondary">0%</p>
-                            </div>
-                        </div>
-                        
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div class="bg-gray-50 rounded-xl p-4" style="height: 300px;">
-                                <h3 class="text-lg font-semibold text-gray-800 mb-4">答题趋势</h3>
-                                <div style="height: 220px;">
-                                    <canvas id="trends-chart"></canvas>
-                                </div>
-                            </div>
-                            <div class="bg-gray-50 rounded-xl p-4">
-                                <h3 class="text-lg font-semibold text-gray-800 mb-4">题目分类</h3>
-                                <canvas id="categories-chart" height="200"></canvas>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </section>
+            </div>
         </div>
     </main>
 
     <!-- 设置模态框 -->
     <div id="settings-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
-        <div class="bg-white rounded-xl shadow-xl max-w-md w-full mx-4 animate-slide-in">
-            <div class="p-6">
-                <div class="flex justify-between items-center mb-6">
-                    <h3 class="text-xl font-bold text-gray-800">设置</h3>
-                    <button id="close-settings" class="text-gray-500 hover:text-gray-700">
-                        <i class="fa fa-times text-xl"></i>
-                    </button>
+        <div class="bg-white rounded-xl shadow-xl p-6 max-w-md w-full mx-4">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-medium">设置</h3>
+                <button id="close-settings" class="text-gray-500 hover:text-gray-700">
+                    <i class="fa fa-times"></i>
+                </button>
+            </div>
+            
+            <form id="settings-form" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1" for="model-input">
+                        AI模型名称
+                    </label>
+                    <input type="text" id="model-input" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="输入豆包接入点model，如：ep-2026***-***" value="">
+                    <p class="text-xs text-gray-500 mt-1">
+                        请输入有效的豆包模型名称（需配置API Key）
+                    </p>
                 </div>
                 
-                <form id="settings-form" class="space-y-4">
-                    <div>
-                        <label for="api-key" class="block text-sm font-medium text-gray-700 mb-1">智谱AI API Key</label>
-                        <input type="password" id="api-key" name="api-key" placeholder="输入您的智谱AI API Key" 
-                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary">
-                        <p class="mt-1 text-sm text-gray-500">
-                            <a href="https://bigmodel.cn/usercenter/proj-mgmt/apikeys" target="_blank" class="text-primary hover:underline">获取API Key</a>
-                        </p>
-                    </div>
-                    
 
-                    
-                    <div class="pt-4">
-                        <button type="submit" class="w-full bg-primary text-white py-2 rounded-lg hover:bg-blue-600 transition-colors">
-                            保存设置
-                        </button>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1" for="api-key">
+                        豆包API Key (可选)
+                    </label>
+                    <input type="text" id="api-key" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="输入您的豆包API Key（使用官方模型时必需）">
+                    <p class="text-xs text-gray-500 mt-1">
+                        API Key可在豆包开发者控制台获取，使用免费模型时无需填写<br>
+                        <a href="https://www.bilibili.com/video/BV1f74TzME6h" target="_blank" class="text-blue-500 hover:underline">查看API开通教程</a>
+                    </p>
+                </div>
+                
+                <button type="submit" class="w-full px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                    保存设置
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- 历史记录详情模态框 -->
+    <div id="history-detail-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-xl shadow-xl p-6 max-w-lg w-full mx-4 max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-4">
+                <h3 id="modal-question-number" class="text-lg font-medium">题目 #1</h3>
+                <button id="close-modal" class="text-gray-500 hover:text-gray-700">
+                    <i class="fa fa-times"></i>
+                </button>
+            </div>
+            
+            <div class="mb-6">
+                <h4 id="modal-question-text" class="text-lg font-medium mb-4"></h4>
+                
+                <div id="modal-options" class="space-y-2 mb-6"></div>
+                
+                <div id="modal-answer" class="mb-4"></div>
+                
+                <div class="text-sm text-gray-500 space-y-2">
+                    <div>
+                        <span class="font-medium">答题时间：</span>
+                        <span id="modal-timestamp"></span>
                     </div>
-                </form>
+                    <div>
+                        <span class="font-medium">关键词：</span>
+                        <span id="modal-keywords"></span>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 
     <!-- 提示消息 -->
-    <div id="toast" class="fixed bottom-6 right-6 bg-white rounded-lg shadow-lg p-4 max-w-sm transform translate-y-10 opacity-0 transition-all duration-300 z-50 hidden">
+    <div id="toast" class="fixed bottom-4 right-4 bg-white rounded-lg shadow-lg p-4 max-w-sm z-50 hidden">
         <div class="flex items-start">
-            <div id="toast-icon" class="flex-shrink-0 mr-3 mt-0.5">
-                <!-- 图标将通过JS动态添加 -->
+            <div id="toast-icon" class="flex-shrink-0 text-green-500 mt-0.5">
+                <i class="fa fa-check-circle text-xl"></i>
             </div>
-            <div class="flex-1">
-                <p id="toast-title" class="text-sm font-medium text-gray-900"></p>
-                <p id="toast-message" class="text-sm text-gray-500 mt-1"></p>
+            <div class="ml-3">
+                <h3 id="toast-title" class="text-sm font-medium text-gray-800"></h3>
+                <div id="toast-message" class="mt-1 text-sm text-gray-500"></div>
             </div>
-            <button id="close-toast" class="ml-4 text-gray-400 hover:text-gray-500">
+            <button id="close-toast" class="ml-auto flex-shrink-0 text-gray-400 hover:text-gray-600">
                 <i class="fa fa-times"></i>
             </button>
         </div>
     </div>
 
-    <!-- Chart.js -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
-    
-    <!-- 主脚本 -->
     <script>
         // 全局变量
         let questions = [];
         let currentQuestionIndex = 0;
         let userData = {
             apiKey: '',
+            selectedModel: '',
             totalAnswered: 0,
             currentStreak: 0,
             bestStreak: 0,
@@ -493,7 +399,7 @@
         let isGenerating = false;
         let trendsChart = null;
         let categoriesChart = null;
-        
+
         // DOM元素
         const pages = document.querySelectorAll('.page');
         const navButtons = document.querySelectorAll('.nav-btn');
@@ -506,7 +412,7 @@
         const settingsForm = document.getElementById('settings-form');
         const toast = document.getElementById('toast');
         const closeToast = document.getElementById('close-toast');
-        
+
         // 答题页面元素
         const questionCard = document.getElementById('question-card');
         const questionNumber = document.getElementById('question-number');
@@ -520,7 +426,7 @@
         const currentAnsweredEl = document.getElementById('current-answered');
         const totalAnsweredEl = document.getElementById('total-answered');
         const questionStockEl = document.getElementById('question-stock');
-        
+
         // 生成题目页面元素
         const generateForm = document.getElementById('generate-form');
         const generationStatus = document.getElementById('generation-status');
@@ -529,7 +435,7 @@
         const generationResults = document.getElementById('generation-results');
         const cancelGeneration = document.getElementById('cancel-generation');
         const finishGeneration = document.getElementById('finish-generation');
-        
+
         // 历史记录页面元素
         const historyFilter = document.getElementById('history-filter');
         const clearHistory = document.getElementById('clear-history');
@@ -543,10 +449,10 @@
         const modalTimestamp = document.getElementById('modal-timestamp');
         const modalKeywords = document.getElementById('modal-keywords');
         const generateFirstBtn = document.getElementById('generate-first');
-        
+
         // 初始化函数
         function init() {
-            // 清除旧的题目数据
+            // 清除旧的数据
             clearOldData();
             
             // 加载本地存储的数据
@@ -566,19 +472,35 @@
             // 显示初始页面
             showPage('quiz-page');
             
-            // 如果有题目，加载保存的题目索引
+            // 如果题目数量大于0，加载保存的题目导航
             if (questions.length > 0) {
-                // 确保索引在有效范围内
+                // 确保导航在有效范围内
                 if (currentQuestionIndex >= questions.length) {
                     currentQuestionIndex = 0;
                 }
                 loadQuestion(currentQuestionIndex);
             } else {
-                showToast('info', '欢迎使用AI答题挑战', '您的题库为空，请先生成一些题目');
+                showToast('info', '欢迎使用AI答题挑战', '您的题库为空，请先生成一些题目开始答题');
                 showPage('generate-page');
             }
+            
+            // 更新最新题目按钮状态
+            updateLatestButtonState();
+            
+            // 初始化KaTeX自动渲染
+            document.addEventListener('DOMContentLoaded', function() {
+                renderMathInElement(document.body, {
+                    delimiters: [
+                        {left: '$$', right: '$$', display: true},
+                        {left: '$', right: '$', display: false},
+                        {left: '\\(', right: '\\)', display: false},
+                        {left: '\\[', right: '\\]', display: true}
+                    ],
+                    throwOnError: false
+                });
+            });
         }
-        
+
         // 设置事件监听器
         function setupEventListeners() {
             // 导航按钮点击事件
@@ -598,6 +520,14 @@
                 });
             });
             
+            // 移动端设置按钮点击事件
+            document.getElementById('mobile-settings-btn').addEventListener('click', () => {
+                document.getElementById('api-key').value = userData.apiKey || '';
+                document.getElementById('model-input').value = userData.selectedModel || '';
+                settingsModal.classList.remove('hidden');
+                mobileMenu.classList.add('hidden');
+            });
+            
             // 移动端菜单切换
             mobileMenuBtn.addEventListener('click', () => {
                 mobileMenu.classList.toggle('hidden');
@@ -606,6 +536,7 @@
             // 设置按钮点击事件
             settingsBtn.addEventListener('click', () => {
                 document.getElementById('api-key').value = userData.apiKey || '';
+                document.getElementById('model-input').value = userData.selectedModel || '';
                 settingsModal.classList.remove('hidden');
             });
             
@@ -618,13 +549,17 @@
             settingsForm.addEventListener('submit', (e) => {
                 e.preventDefault();
                 const apiKey = document.getElementById('api-key').value;
+                const selectedModel = document.getElementById('model-input').value.trim() || '';
                 
                 userData.apiKey = apiKey;
+                userData.selectedModel = selectedModel;
                 
                 saveUserData();
                 settingsModal.classList.add('hidden');
                 showToast('success', '设置已保存', '您的设置已成功更新');
             });
+            
+
             
             // 关闭提示消息
             closeToast.addEventListener('click', () => {
@@ -662,13 +597,31 @@
                     return;
                 }
                 
-                if (!userData.apiKey) {
-                    showToast('error', '生成失败', '请先设置API Key');
+                if (userData.selectedModel === 'doubao-seed-16k' && !userData.apiKey) {
+                    showToast('error', '生成失败', '使用豆包官方模型时需要设置API Key');
+                    settingsModal.classList.remove('hidden');
+                    return;
+                }
+                
+                // 更新检查逻辑：确保有API Key且不使用free-model
+                if (!userData.apiKey || userData.selectedModel === 'free-model') {
+                    showToast('error', '生成失败', '请设置有效的API Key并选择正确的模型名称');
                     settingsModal.classList.remove('hidden');
                     return;
                 }
                 
                 generateQuestions(subject, keywords, count);
+            });
+            
+            // 最新题目按钮点击事件
+            document.getElementById('nav-latest').addEventListener('click', () => {
+                goToLatestQuestion();
+            });
+            
+            // 移动端最新题目按钮点击事件
+            document.getElementById('mobile-nav-latest').addEventListener('click', () => {
+                goToLatestQuestion();
+                mobileMenu.classList.add('hidden');
             });
             
             // 取消生成题目
@@ -689,7 +642,7 @@
                 showPage('quiz-page');
                 showToast('success', '生成完成', `成功生成 ${questions.length} 道题目`);
                 
-                // 强制加载第一题，确保显示新生成的题目
+                // 控制加载第一题，确保显示新生成的题目
                 currentQuestionIndex = 0;
                 loadQuestion(currentQuestionIndex);
             });
@@ -701,7 +654,7 @@
             
             // 清空历史记录
             clearHistory.addEventListener('click', () => {
-                if (confirm('确定要清空所有历史记录吗？此操作不可恢复。')) {
+                if (confirm('确定要清空所有答题记录吗？此操作不可恢复。')) {
                     questions = [];
                     saveQuestions();
                     renderHistoryList();
@@ -727,7 +680,7 @@
                 showPage('generate-page');
             });
         }
-        
+
         // 显示指定页面
         function showPage(pageId) {
             pages.forEach(page => {
@@ -741,12 +694,12 @@
                 updateCharts();
             }
             
-            // 如果显示历史记录页面，渲染历史列表
+            // 如果显示历史记录页面，刷新答题列表
             if (pageId === 'history-page') {
                 renderHistoryList();
             }
         }
-        
+
         // 清除旧的题目数据（仅执行一次）
         function clearOldData() {
             // 检查是否已经清除过旧数据
@@ -758,7 +711,7 @@
                 localStorage.setItem('hasClearedOldData', 'true');
             }
         }
-        
+
         // 加载用户数据
         function loadUserData() {
             const savedUserData = localStorage.getItem('quizUserData');
@@ -783,12 +736,12 @@
                 currentQuestionIndex = parseInt(savedIndex, 10);
             }
         }
-        
+
         // 保存用户数据
         function saveUserData() {
             localStorage.setItem('quizUserData', JSON.stringify(userData));
         }
-        
+
         // 加载题目数据
         function loadQuestions() {
             // 先清除旧数据
@@ -799,12 +752,12 @@
                 questions = JSON.parse(savedQuestions);
             }
         }
-        
+
         // 保存题目数据
         function saveQuestions() {
             localStorage.setItem('quizQuestions', JSON.stringify(questions));
         }
-        
+
         // 加载当前题目
         function loadQuestion(index) {
             // 保存当前题目索引
@@ -825,7 +778,7 @@
             // 更新题目文本
             questionText.textContent = question.question;
             
-            // 清空选项容器
+            // 清除选项容器
             optionsContainer.innerHTML = '';
             
             // 添加选项
@@ -862,6 +815,31 @@
                 optionsContainer.appendChild(optionDiv);
             });
             
+            // 渲染数学公式
+            renderMathInElement(questionText, {
+                delimiters: [
+                    {left: '$$', right: '$$', display: true},
+                    {left: '$', right: '$', display: false},
+                    {left: '\\(', right: '\\)', display: false},
+                    {left: '\\[', right: '\\]', display: true}
+                ],
+                throwOnError: false
+            });
+            
+            // 渲染选项中的数学公式
+            const optionTexts = document.querySelectorAll('.option-text');
+            optionTexts.forEach(text => {
+                renderMathInElement(text, {
+                    delimiters: [
+                        {left: '$$', right: '$$', display: true},
+                        {left: '$', right: '$', display: false},
+                        {left: '\\(', right: '\\)', display: false},
+                        {left: '\\[', right: '\\]', display: true}
+                    ],
+                    throwOnError: false
+                });
+            });
+            
             // 显示或隐藏答题反馈
             if (question.answered) {
                 showAnswerFeedback(question);
@@ -876,13 +854,13 @@
                 nextBtn.textContent = '完成';
                 nextBtn.innerHTML = '完成 <i class="fa fa-check ml-2"></i>';
             } else {
-                nextBtn.innerHTML = '下一题 <i class="fa fa-arrow-right ml-2"></i>';
+                nextBtn.innerHTML = '下一题<i class="fa fa-arrow-right ml-2"></i>';
             }
             
             // 开始计时器
             startTimer();
         }
-        
+
         // 选择选项
         function selectOption(option) {
             const question = questions[currentQuestionIndex];
@@ -912,7 +890,7 @@
             loadQuestion(currentQuestionIndex);
             updateStatsDisplay();
         }
-        
+
         // 显示答题反馈
         function showAnswerFeedback(question) {
             answerFeedback.classList.remove('hidden');
@@ -927,7 +905,7 @@
                         <div class="ml-3">
                             <h3 class="text-lg font-medium">回答正确！</h3>
                             <p class="mt-1">正确答案是：${question.answer}</p>
-                            <p class="mt-2 text-sm">${question.explanation || '解析暂不可用'}</p>
+                            <p class="mt-2">${question.explanation || '解析暂不可用'}</p>
                         </div>
                     </div>
                 `;
@@ -942,13 +920,24 @@
                             <h3 class="text-lg font-medium">回答错误</h3>
                             <p class="mt-1">您的答案：${question.userAnswer}</p>
                             <p class="mt-1">正确答案：${question.answer}</p>
-                            <p class="mt-2 text-sm">${question.explanation || '解析暂不可用'}</p>
+                            <p class="mt-2">${question.explanation || '解析暂不可用'}</p>
                         </div>
                     </div>
                 `;
             }
+            
+            // 渲染解析中的数学公式
+            renderMathInElement(answerFeedback, {
+                delimiters: [
+                    {left: '$$', right: '$$', display: true},
+                    {left: '$', right: '$', display: false},
+                    {left: '\\(', right: '\\)', display: false},
+                    {left: '\\[', right: '\\]', display: true}
+                ],
+                throwOnError: false
+            });
         }
-        
+
         // 开始计时器
         function startTimer() {
             let seconds = 0;
@@ -961,13 +950,13 @@
                 timerDisplay.textContent = `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
             }, 1000);
         }
-        
+
         // 生成题目
         async function generateQuestions(subject, keywords, count) {
             // 显示生成状态
             generationStatus.classList.remove('hidden');
             generationProgress.style.width = '0%';
-            generationMessage.textContent = '正在调用智谱AI生成题目...';
+            generationMessage.textContent = '正在调用豆包AI生成题目...';
             generationResults.innerHTML = '';
             
             isGenerating = true;
@@ -981,8 +970,8 @@
                     generationProgress.style.width = `${progress}%`;
                     generationMessage.textContent = `正在生成第 ${i + 1}/${count} 道题目...`;
                     
-                    // 调用智谱AI生成题目
-                    const question = await generateQuestionWithZhipuAI(subject, keywords);
+                    // 调用豆包AI生成题目
+                    const question = await generateQuestionWithDoubaoAI(subject, keywords);
                     
                     if (question) {
                         questions.push(question);
@@ -994,7 +983,7 @@
                         resultItem.innerHTML = `
                             <div class="flex items-center">
                                 <i class="fa fa-check-circle text-green-500 mr-2"></i>
-                                <span>题目 ${generatedCount}: ${question.question.substring(0, 50)}${question.question.length > 50 ? '...' : ''}</span>
+                                <span>题目 ${generatedCount}：${question.question.substring(0, 50)}${question.question.length > 50 ? '...' : ''}</span>
                             </div>
                         `;
                         generationResults.appendChild(resultItem);
@@ -1002,11 +991,14 @@
                         // 保存题目
                         saveQuestions();
                         
+                        // 更新最新题目按钮状态
+                        updateLatestButtonState();
+                        
                         // 短暂延迟，避免API调用过于频繁
                         await new Promise(resolve => setTimeout(resolve, 2000));
                     }
                 } catch (error) {
-                    console.error(`生成第${i + 1}题失败:`, error);
+                    console.error(`生成第${i + 1}题失败`, error);
                     
                     // 添加错误信息到结果列表
                     const resultItem = document.createElement('div');
@@ -1014,7 +1006,7 @@
                     resultItem.innerHTML = `
                         <div class="flex items-center">
                             <i class="fa fa-times-circle text-red-500 mr-2"></i>
-                            <span>题目 ${i + 1}: 生成失败 - ${error.message}</span>
+                            <span>题目 ${i + 1}：生成失败 - ${error.message}</span>
                         </div>
                     `;
                     generationResults.appendChild(resultItem);
@@ -1023,148 +1015,247 @@
             
             // 生成完成
             generationProgress.style.width = '100%';
-            generationMessage.textContent = `题目生成完成！成功生成 ${generatedCount}/${count} 道题目`;
+            generationMessage.textContent = `题目生成完成，成功生成 ${generatedCount}/${count} 道题目`;
             finishGeneration.classList.remove('hidden');
             isGenerating = false;
             
             // 更新统计显示
             updateStatsDisplay();
         }
-        
-        // 使用智谱AI生成题目
-        async function generateQuestionWithZhipuAI(subject, keywords) {
-            if (!userData.apiKey) {
-                throw new Error('请先设置智谱AI API Key');
-            }
-            
-            const prompt = `请基于学科"${subject}"和关键词"${keywords}"生成一道高中${subject}选择题。题目要专业、准确，包含4个选项（A、B、C、D），其中只有一个正确答案。请按照以下JSON格式输出：
+
+        // 使用AI生成题目
+        async function generateQuestionWithDoubaoAI(subject, keywords) {
+            const prompt = `请基于学科"${subject}"和关键词"${keywords}"生成一道${subject}选择题。题目要专业、准确，包含4个选项（A、B、C、D），其中只有一个正确答案。请严格按照以下JSON格式输出，不要添加任何额外内容：
 {
   "question": "题目内容",
   "options": ["选项A", "选项B", "选项C", "选项D"],
   "answer": "正确答案（A/B/C/D）",
   "explanation": "答案解析"
 }`;
-            
+
             try {
-                const response = await fetch('https://open.bigmodel.cn/api/paas/v4/chat/completions', {
+                // 直接使用豆包官方模型API
+                const response = await fetch('https://ark.cn-beijing.volces.com/api/v3/responses', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                         'Authorization': `Bearer ${userData.apiKey}`
                     },
                     body: JSON.stringify({
-                        model: 'glm-4',
-                        messages: [
-                            {
-                                role: 'system',
-                                content: `你是一个专业的${subject}教师，擅长生成高质量的${subject}选择题。`
-                            },
+                        model: userData.selectedModel, // 使用用户选择的模型
+                        input: [
                             {
                                 role: 'user',
-                                content: prompt
+                                content: [
+                                    {
+                                        type: 'input_text',
+                                        text: prompt
+                                    }
+                                ]
                             }
-                        ],
-                        temperature: 0.7,
-                        max_tokens: 1000
+                        ]
                     })
                 });
-                
+
                 if (!response.ok) {
-                    throw new Error(`智谱AI API调用失败: ${response.status} ${response.statusText}`);
+                    const errorData = await response.json().catch(() => ({}));
+                    throw new Error(`豆包AI API调用失败: ${response.status} ${response.statusText} - ${errorData.error?.message || errorData.message || ''}`);
                 }
-                
+
                 const data = await response.json();
-                
-                if (!data.choices || data.choices.length === 0 || !data.choices[0].message) {
-                    throw new Error('智谱AI返回的数据格式不正确');
+
+                // 添加调试信息，打印API响应
+                console.log('豆包AI API响应:', data);
+
+                // 处理API响应格式
+                let content;
+                // 添加更灵活的响应格式处理，支持不同版本的API响应
+                if (data.output && data.output.length > 0) {
+                    // 检查是否有message类型的输出（新版本格式）
+                    const messageOutput = data.output.find(item => item.type === 'message' && item.content);
+                    if (messageOutput && messageOutput.content && messageOutput.content.length > 0) {
+                        // 新版本格式：data.output[n].content[0].text
+                        content = messageOutput.content[0].text || messageOutput.content[0].content || '';
+                    } else if (data.output[0].content) {
+                        // 内容旧格式：data.output[0].content
+                        content = data.output[0].content;
+                    }
+                } else if (data.choices && data.choices.length > 0 && data.choices[0].message && data.choices[0].message.content) {
+                    // 旧格式：data.choices[0].message.content
+                    content = data.choices[0].message.content;
+                } else if (data.content) {
+                    // 简单格式：直接返回content
+                    content = data.content;
                 }
                 
-                const content = data.choices[0].message.content;
-                
-                // 提取JSON部分
-                const jsonMatch = content.match(/\{[\s\S]*\}/);
-                if (!jsonMatch) {
-                    throw new Error('无法从AI响应中提取JSON格式');
+                // 确保content是字符串或对象
+                if (typeof content === 'string') {
+                    content = (content || '').trim();
                 }
                 
-                const questionData = JSON.parse(jsonMatch[0]);
+                if (!content) {
+                    console.error('API响应结构:', data);
+                    throw new Error('豆包AI返回的数据格式不正确');
+                }
+
+                // 处理和提取JSON内容
+                let cleanContent = content;
+                let questionData;
                 
-                // 验证必要字段
-                if (!questionData.question || !questionData.options || !questionData.answer || !questionData.explanation) {
-                    throw new Error('AI响应格式不完整');
+                // 方法1：检查content是否已经是对象
+                if (typeof cleanContent === 'object') {
+                    questionData = cleanContent;
+                } else {
+                    // 清除可能的markdown代码块标记
+                    cleanContent = cleanContent.replace(/```json|```/g, '').trim();
+                    
+                    // 方法2：尝试直接解析
+                    try {
+                        questionData = JSON.parse(cleanContent);
+                    } catch (e) {
+                        console.log('直接解析失败，尝试提取JSON对象:', e);
+                        
+                        // 方法3：尝试提取JSON对象
+                        const jsonMatch = cleanContent.match(/\{[\s\S]*\}/);
+                        if (jsonMatch) {
+                            try {
+                                questionData = JSON.parse(jsonMatch[0]);
+                            } catch (e) {
+                                console.log('提取JSON对象解析失败:', e);
+                                questionData = null;
+                            }
+                        } else {
+                            questionData = null;
+                        }
+                    }
                 }
                 
-                // 创建新题目对象
-                const newQuestion = {
-                    id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
-                    question: questionData.question,
-                    options: questionData.options,
-                    answer: questionData.answer.toUpperCase(),
-                    explanation: questionData.explanation,
-                    keywords: [`${subject}`, ...keywords.split(',').map(k => k.trim())],
-                    timestamp: Date.now(),
-                    answered: false,
-                    userAnswer: null,
-                    isCorrect: false
-                };
+                // 验证解析结果
+                if (questionData && questionData.question && questionData.options && questionData.answer && questionData.explanation) {
+                    // 解析成功且包含所有必要字段
+                    const newQuestion = {
+                        id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+                        question: questionData.question,
+                        options: questionData.options,
+                        answer: questionData.answer.toUpperCase(),
+                        explanation: questionData.explanation,
+                        keywords: [`${subject}`, ...keywords.split(',').map(k => k.trim())],
+                        timestamp: Date.now(),
+                        answered: false,
+                        userAnswer: null,
+                        isCorrect: false
+                    };
+                    return newQuestion;
+                }
                 
-                return newQuestion;
+                // 所有尝试都失败了
+                console.error('无法解析的API响应内容:', cleanContent);
+                throw new Error('无法从豆包AI响应中提取有效题目数据');
             } catch (error) {
                 if (error.message.includes('401')) {
-                    throw new Error('API Key无效或已过期');
+                    throw new Error('豆包API Key无效/过期，或账号无API调用配额');
                 } else if (error.message.includes('429')) {
-                    throw new Error('API调用频率过高，请稍后再试');
+                    throw new Error('API调用频率超限，请5分钟后重试');
+                } else if (error.message.includes('403')) {
+                    throw new Error(`账号无${userData.selectedModel} 模型配额，请在火山方舟控制台开通`);
+                } else if (error.message.includes('404')) {
+                    throw new Error('端点错误，请检查网络是否能访问火山方舟API');
                 } else if (error.message.includes('Network')) {
-                    throw new Error('网络连接失败，请检查网络');
+                    throw new Error('网络连接失败，请检查网络/防火墙');
                 } else {
                     throw error;
                 }
             }
         }
-        
 
-        
         // 检查题目库存
         function checkQuestionStock() {
-            const threshold = userData.refreshThreshold || 20;
-            const unansweredQuestions = questions.filter(q => !q.answered).length;
-            
-            if (userData.autoRefresh && unansweredQuestions < threshold) {
-                // 获取最近使用的关键词
-                let recentKeywords = 'JavaScript,HTML,CSS,前端开发';
-                if (questions.length > 0) {
-                    const recentQuestion = questions[questions.length - 1];
-                    if (recentQuestion.keywords && recentQuestion.keywords.length > 0) {
-                        recentKeywords = recentQuestion.keywords.join(',');
-                    }
+            // 获取最近使用的关键词
+            let recentKeywords = "JavaScript,HTML,CSS,前端开发";
+            if (questions.length > 0) {
+                const recentQuestion = questions[questions.length - 1];
+                if (recentQuestion.keywords && recentQuestion.keywords.length > 0) {
+                    recentKeywords = recentQuestion.keywords.join(",");
                 }
-                
-                // 计算需要生成的题目数量
-                const neededCount = threshold - unansweredQuestions;
-                
-                showToast('info', '自动更新题目', `检测到题目库存不足，正在生成 ${neededCount} 道新题目`);
-                
-                // 生成新题目
-                generateQuestions(recentKeywords, neededCount);
+            }
+            
+            // 获取学科输入框的值，如果为空则使用默认值
+            let subject = document.getElementById('subject')?.value || "默认主题";
+            if (!subject.trim()) {
+                subject = "默认主题";
+            }
+            
+            // 无论库存多少，都生成7道题目
+            const neededCount = 7;
+            
+            showToast("info", "自动更新题目", `正在生成 ${neededCount} 道新题目`);
+            
+            // 生成新题目
+            generateQuestions(subject, recentKeywords, neededCount);
+        }
+        
+        // 跳转到最新题目
+        function goToLatestQuestion() {
+            if (questions.length > 0) {
+                currentQuestionIndex = questions.length - 1;
+                showPage('quiz-page');
+                loadQuestion(currentQuestionIndex);
+                showToast('success', '已跳转', '已跳转到最新题目');
+            } else {
+                showToast('error', '跳转失败', '题库为空，无法跳转到最新题目');
+                showPage('generate-page');
             }
         }
         
+        // 更新最新题目按钮状态
+        function updateLatestButtonState() {
+            const navLatestBtn = document.getElementById('nav-latest');
+            const mobileNavLatestBtn = document.getElementById('mobile-nav-latest');
+            
+            if (questions.length > 0) {
+                navLatestBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                navLatestBtn.classList.add('text-blue-600');
+                mobileNavLatestBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                mobileNavLatestBtn.classList.add('text-blue-600');
+            } else {
+                navLatestBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                navLatestBtn.classList.remove('text-blue-600');
+                mobileNavLatestBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                mobileNavLatestBtn.classList.remove('text-blue-600');
+            }
+        }
+
         // 更新统计显示
         function updateStatsDisplay() {
             const answeredQuestions = questions.filter(q => q.answered).length;
-            const unansweredQuestions = questions.filter(q => !q.answered).length;
+            const unansweredQuestions = questions.length - answeredQuestions;
             
             currentAnsweredEl.textContent = answeredQuestions;
             totalAnsweredEl.textContent = userData.totalAnswered;
-            questionStockEl.textContent = questions.length;
+            
+            // 更新统计页面数据
+            if (document.getElementById('stats-total')) {
+                document.getElementById('stats-total').textContent = userData.totalAnswered;
+                
+                const accuracy = userData.totalAnswered > 0 
+                    ? Math.round((userData.correctAnswers / userData.totalAnswered) * 100) 
+                    : 0;
+                document.getElementById('stats-accuracy').textContent = `${accuracy}%`;
+                
+                document.getElementById('stats-streak').textContent = userData.currentStreak;
+                document.getElementById('stats-best-streak').textContent = userData.bestStreak;
+            }
+            
+            // 更新最新题目按钮状态
+            updateLatestButtonState();
         }
-        
+
         // 渲染历史记录列表
         function renderHistoryList() {
             const filter = historyFilter.value;
             let filteredQuestions = [...questions];
             
-            // 根据筛选条件过滤题目
+            // 根据选择条件过滤题目
             switch (filter) {
                 case 'correct':
                     filteredQuestions = questions.filter(q => q.answered && q.isCorrect);
@@ -1194,7 +1285,7 @@
                 return;
             }
             
-            // 添加题目到历史列表
+            // 添加题目到答题列表
             filteredQuestions.forEach((question, index) => {
                 const date = new Date(question.timestamp);
                 const formattedDate = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')} ${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
@@ -1244,7 +1335,7 @@
                 historyList.appendChild(historyItem);
             });
         }
-        
+
         // 显示历史记录详情
         function showHistoryDetail(question, index) {
             modalQuestionNumber.textContent = `题目 #${index + 1}`;
@@ -1321,7 +1412,7 @@
                         </div>
                         <div class="ml-3">
                             <h3 class="text-lg font-medium">未回答</h3>
-                            <p class="mt-1">此题目尚未回答</p>
+                            <p class="mt-1">此题尚未回答</p>
                         </div>
                     </div>
                 `;
@@ -1336,7 +1427,7 @@
             // 显示模态框
             historyDetailModal.classList.remove('hidden');
         }
-        
+
         // 初始化图表
         function initCharts() {
             // 答题趋势图表
@@ -1393,109 +1484,85 @@
                     maintainAspectRatio: false,
                     plugins: {
                         legend: {
-                            position: 'bottom',
+                            position: 'top',
                         }
-                    },
-                    cutout: '70%'
+                    }
                 }
             });
         }
-        
-        // 更新图表
+
+        // 更新图表数据
         function updateCharts() {
-            // 更新答题趋势图表
+            // 更新趋势图表
             const answeredQuestions = questions.filter(q => q.answered);
-            const correctAnswers = questions.filter(q => q.answered && q.isCorrect).length;
-            const incorrectAnswers = answeredQuestions.length - correctAnswers;
-            const unansweredQuestions = questions.length - answeredQuestions.length;
+            const correctAnswersByDay = {};
             
-            // 生成最近7天的日期标签
-            const dateLabels = [];
-            const correctData = [];
+            answeredQuestions.forEach(question => {
+                const date = new Date(question.timestamp);
+                const dateStr = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')}`;
+                
+                if (!correctAnswersByDay[dateStr]) {
+                    correctAnswersByDay[dateStr] = 0;
+                }
+                
+                if (question.isCorrect) {
+                    correctAnswersByDay[dateStr]++;
+                }
+            });
             
-            for (let i = 6; i >= 0; i--) {
-                const date = new Date();
-                date.setDate(date.getDate() - i);
-                const dateStr = `${date.getMonth() + 1}/${date.getDate()}`;
-                dateLabels.push(dateStr);
-                
-                // 计算当天的正确答题数
-                const dayStart = new Date(date);
-                dayStart.setHours(0, 0, 0, 0);
-                const dayEnd = new Date(date);
-                dayEnd.setHours(23, 59, 59, 999);
-                
-                const dayCorrectAnswers = questions.filter(q => 
-                    q.answered && 
-                    q.isCorrect && 
-                    q.timestamp >= dayStart.getTime() && 
-                    q.timestamp <= dayEnd.getTime()
-                ).length;
-                
-                correctData.push(dayCorrectAnswers);
-            }
+            const dates = Object.keys(correctAnswersByDay).sort();
+            const correctCounts = dates.map(date => correctAnswersByDay[date]);
             
-            trendsChart.data.labels = dateLabels;
-            trendsChart.data.datasets[0].data = correctData;
+            trendsChart.data.labels = dates;
+            trendsChart.data.datasets[0].data = correctCounts;
             trendsChart.update();
             
-            // 更新题目分类图表
-            categoriesChart.data.datasets[0].data = [answeredQuestions.length, unansweredQuestions.length];
+            // 更新分类图表
+            const totalAnswered = questions.filter(q => q.answered).length;
+            const totalUnanswered = questions.length - totalAnswered;
+            
+            categoriesChart.data.datasets[0].data = [totalAnswered, totalUnanswered];
             categoriesChart.update();
-            
-            // 更新统计数据
-            document.getElementById('stats-total-answered').textContent = userData.totalAnswered;
-            document.getElementById('stats-correct-answers').textContent = userData.correctAnswers;
-            document.getElementById('stats-incorrect-answers').textContent = userData.totalAnswered - userData.correctAnswers;
-            
-            const accuracy = userData.totalAnswered > 0 
-                ? Math.round((userData.correctAnswers / userData.totalAnswered) * 100) 
-                : 0;
-            document.getElementById('stats-accuracy').textContent = `${accuracy}%`;
         }
-        
+
         // 显示提示消息
         function showToast(type, title, message) {
-            let iconClass = '';
+            const toastIcon = document.getElementById('toast-icon');
+            const toastTitle = document.getElementById('toast-title');
+            const toastMessage = document.getElementById('toast-message');
             
-            switch (type) {
-                case 'success':
-                    iconClass = 'fa-check-circle text-green-500';
-                    break;
-                case 'error':
-                    iconClass = 'fa-times-circle text-red-500';
-                    break;
-                case 'info':
-                    iconClass = 'fa-info-circle text-blue-500';
-                    break;
-                case 'warning':
-                    iconClass = 'fa-exclamation-circle text-yellow-500';
-                    break;
+            // 设置图标和样式
+            if (type === 'success') {
+                toastIcon.innerHTML = '<i class="fa fa-check-circle text-xl text-green-500"></i>';
+                toast.classList.add('border-l-4', 'border-green-500');
+            } else if (type === 'error') {
+                toastIcon.innerHTML = '<i class="fa fa-times-circle text-xl text-red-500"></i>';
+                toast.classList.add('border-l-4', 'border-red-500');
+            } else if (type === 'info') {
+                toastIcon.innerHTML = '<i class="fa fa-info-circle text-xl text-blue-500"></i>';
+                toast.classList.add('border-l-4', 'border-blue-500');
             }
             
-            document.getElementById('toast-icon').innerHTML = `<i class="fa ${iconClass} text-xl"></i>`;
-            document.getElementById('toast-title').textContent = title;
-            document.getElementById('toast-message').textContent = message;
+            // 设置内容
+            toastTitle.textContent = title;
+            toastMessage.textContent = message;
             
+            // 显示提示
             toast.classList.remove('hidden');
-            setTimeout(() => {
-                toast.classList.remove('translate-y-10', 'opacity-0');
-            }, 10);
             
             // 自动隐藏
             setTimeout(() => {
                 hideToast();
             }, 5000);
         }
-        
+
         // 隐藏提示消息
         function hideToast() {
-            toast.classList.add('translate-y-10', 'opacity-0');
-            setTimeout(() => {
-                toast.classList.add('hidden');
-            }, 300);
+            toast.classList.add('hidden');
+            // 清除边框样式
+            toast.classList.remove('border-l-4', 'border-green-500', 'border-red-500', 'border-blue-500');
         }
-        
+
         // 页面加载完成后初始化
         document.addEventListener('DOMContentLoaded', init);
     </script>
